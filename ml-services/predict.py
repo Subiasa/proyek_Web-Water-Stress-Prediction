@@ -1,53 +1,46 @@
 import os
-import pickle
+import joblib
 import pandas as pd
 import numpy as np
 
-# 1. Inisialisasi Path Direktori Models
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, 'models')
 
-# 2. Fungsi Pemuatan Model (Load .pkl)
-def load_pickle(filename):
-    with open(os.path.join(MODEL_DIR, filename), 'rb') as file:
-        return pickle.load(file)
+# Memuat model
+scaler = joblib.load(os.path.join(MODEL_DIR, 'standard_scaler.pkl'))
+pca = joblib.load(os.path.join(MODEL_DIR, 'pca_model.pkl'))
+rf_model = joblib.load(os.path.join(MODEL_DIR, 'water_stress_model.pkl'))
+feature_cols = joblib.load(os.path.join(MODEL_DIR, 'feature_columns.pkl'))
 
-# Memuat kelima file .pkl berdasarkan gambar Anda
-scaler = load_pickle('standard_scaler.pkl')
-pca = load_pickle('pca_model.pkl')
-rf_model = load_pickle('water_stress_model.pkl')
-feature_cols = load_pickle('feature_columns.pkl')
-cluster_mapping = load_pickle('cluster_mapping.pkl')
-
-# 3. Fungsi Prediksi Utama
 def make_prediction(input_data: dict):
-    # Ubah input dictionary menjadi Pandas DataFrame
+    # 1. Ubah input menjadi DataFrame
     df = pd.DataFrame([input_data])
     
-    # Pastikan struktur kolom persis sama dengan saat training menggunakan feature_columns.pkl
+    # 2. Penyesuaian fitur (Align data dengan model)
     for col in feature_cols:
         if col not in df.columns:
-            df[col] = 0.0  # Nilai default jika Laravel tidak mengirimkan kolom tertentu
+            df[col] = 0.0
     df = df[feature_cols]
 
-    # Tahap Preprocessing
+    # 3. Preprocessing (Standard Scaling)
+    # Ini langkah yang wajib, karena model dilatih dengan data yang sudah di-scale
     scaled_data = scaler.transform(df)
-    pca_data = pca.transform(scaled_data)
-
-    # Tahap Prediksi Klasifikasi (Random Forest)
-    stress_prediction = rf_model.predict(pca_data)[0]
     
-    # Menghitung probabilitas/persentase keyakinan model
-    confidence_score = 100.0
+    # Debug: Melihat shape data sebelum masuk ke model
+    print(f"DEBUG - Shape data input ke model: {scaled_data.shape}")
+
+
+    # 4. Prediksi
+    prediction = rf_model.predict(scaled_data)[0]
+    
+    # 5. Confidence Score
+    confidence = 100.0
     if hasattr(rf_model, "predict_proba"):
-        probabilities = rf_model.predict_proba(pca_data)[0]
-        confidence_score = float(np.max(probabilities) * 100)
+        probabilities = rf_model.predict_proba(scaled_data)[0]
+        confidence = float(np.max(probabilities) * 100)
 
-    # Tahap Pengembalian Hasil
     return {
-        "cluster_id": 1, # (Lihat pertanyaan lanjutan saya di bawah terkait ini)
-        "cluster_name": cluster_mapping.get(1, "Unknown"),
-        "prediction": str(stress_prediction),
-        "confidence": round(confidence_score, 2)
+        "prediction": str(prediction),
+        "confidence": round(confidence, 2)
     }
-

@@ -3,16 +3,28 @@ from pydantic import BaseModel
 import uvicorn
 from predict import make_prediction
 
+
+
+
 app = FastAPI(title="SWAG ML Microservice", description="API untuk prediksi Water Stress dan Clustering")
 
 # Pydantic Schema: Memvalidasi data masuk dari Laravel
 class SensorInput(BaseModel):
-    temperature: float
-    humidity: float
-    soil_water_content: float = 0.0
-    par: float = 0.0
-    leaf_thickness: float = 0.0
-    leaf_length: float = 0.0
+    temp_mean: float
+    rh_mean: float
+    pd1_mean: float
+    spectral_mean: float
+    spectral_std: float
+    pla_difference: float
+    rh_range: float
+
+    # temperature: float
+    # humidity: float
+    # soil_water_content: float = 0.0
+    # par: float = 0.0
+    # leaf_thickness: float = 0.0
+    # leaf_length: float = 0.0
+    
 
 @app.post("/predict")
 def get_prediction(data: SensorInput):
@@ -28,6 +40,8 @@ def get_prediction(data: SensorInput):
     except Exception as e:
         # Menangkap error jika format data atau komputasi gagal
         raise HTTPException(status_code=500, detail=str(e))
+    
+    
 
 if __name__ == "__main__":
     # Menjalankan server FastAPI di localhost port 8001 (Berbeda dengan Laravel di 8000)
