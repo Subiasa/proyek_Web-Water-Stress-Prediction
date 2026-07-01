@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 
+import LandingPage from './pages/landing-page';
 import Login from './pages/Login';
 import DashboardLayout from './layouts/DashboardLayout'; // Import Layout Baru
 import Dashboard from './pages/dashboard';
@@ -15,13 +16,12 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login />} />
 
-        {/* Semua rute di bawah ini dilindungi dan dibungkus oleh Layout */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+    
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dataset" element={<Dataset />} />
             <Route path="/prediction" element={<Prediction />} />
