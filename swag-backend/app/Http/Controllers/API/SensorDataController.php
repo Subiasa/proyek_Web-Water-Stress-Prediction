@@ -24,12 +24,16 @@ class SensorDataController extends Controller
     {
         $validated = $request->validate([
             'timestamp' => ['required', 'date'],
-            'temperature' => ['required', 'numeric'],
-            'humidity' => ['required', 'numeric'],
-            'soil_water_content' => ['required', 'numeric'],
-            'par' => ['required', 'numeric'],
-            'leaf_thickness' => ['required', 'numeric'],
-            'leaf_length' => ['required', 'numeric'],
+            'temp_mean' => ['required', 'numeric'],
+            'rh_mean' => ['required', 'numeric'],
+            'pd1_mean' => ['required', 'numeric'],
+            'pd2_mean' => ['required', 'numeric'],
+            'spectral_mean' => ['required', 'numeric'],
+            'spectral_std' => ['required', 'numeric'],
+            'pla_difference' => ['required', 'numeric'],
+            'temp_rh_index' => ['required', 'numeric'],
+            'temp_range' => ['required', 'numeric'],
+            'rh_range' => ['required', 'numeric'],
             // cluster_id dan water_stress biasanya dihasilkan dari Python ML, 
             // sehingga opsional saat input awal dari IoT/Frontend
         ]);
@@ -67,12 +71,16 @@ class SensorDataController extends Controller
         // 'sometimes' berarti validasi hanya berjalan jika field tersebut dikirimkan
         $validated = $request->validate([
             'timestamp' => ['sometimes', 'date'],
-            'temperature' => ['sometimes', 'numeric'],
-            'humidity' => ['sometimes', 'numeric'],
-            'soil_water_content' => ['sometimes', 'numeric'],
-            'par' => ['sometimes', 'numeric'],
-            'leaf_thickness' => ['sometimes', 'numeric'],
-            'leaf_length' => ['sometimes', 'numeric'],
+            'temp_mean' => ['sometimes', 'numeric'],
+            'rh_mean' => ['sometimes', 'numeric'],
+            'pd1_mean' => ['sometimes', 'numeric'],
+            'pd2_mean' => ['sometimes', 'numeric'],
+            'spectral_mean' => ['sometimes', 'numeric'],
+            'spectral_std' => ['sometimes', 'numeric'],
+            'pla_difference' => ['sometimes', 'numeric'],
+            'temp_rh_index' => ['sometimes', 'numeric'],
+            'temp_range' => ['sometimes', 'numeric'],
+            'rh_range' => ['sometimes', 'numeric'],
             'cluster_id' => ['nullable', 'exists:clustering_results,id'],
             'water_stress' => ['nullable', 'string']
         ]);

@@ -13,9 +13,12 @@ class SensorInput(BaseModel):
     temp_mean: float
     rh_mean: float
     pd1_mean: float
+    pd2_mean: float
     spectral_mean: float
     spectral_std: float
     pla_difference: float
+    temp_rh_index: float
+    temp_range: float
     rh_range: float
 
     # temperature: float

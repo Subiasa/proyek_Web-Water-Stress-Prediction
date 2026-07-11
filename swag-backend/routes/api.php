@@ -7,7 +7,6 @@ use App\Http\Controllers\API\HistoryController;
 use App\Http\Controllers\API\SensorDataController;
 use App\Http\Controllers\API\PredictionController;
 use App\Http\Controllers\API\DashboardController;
-use App\Http\Controllers\API\AnalyticsController;
 use App\Http\Controllers\API\ProfileController;
 
 // Rute Publik
@@ -28,9 +27,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // 3. Dashboard Menu
     Route::get('/dashboard', [DashboardController::class, 'summary']);
-
-    // 4. Analytics Menu
-    Route::get('/analytics', [AnalyticsController::class, 'chartData']);
 
     // 5. Dataset Menu (CRUD Sensor)
     Route::apiResource('sensors', SensorDataController::class);

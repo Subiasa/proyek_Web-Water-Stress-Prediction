@@ -13,24 +13,23 @@ class PredictionController extends Controller
 {
     public function predict(Request $request)
     {
-        // 1. Validasi Input
+        // 1. Validasi Input 10 Parameter dari Frontend
         $validated = $request->validate([
-            'sensor_data_id' => ['required', 'exists:sensor_data,id']
+            'temp_mean' => 'required|numeric',
+            'rh_mean' => 'required|numeric',
+            'pd1_mean' => 'required|numeric',
+            'pd2_mean' => 'required|numeric',
+            'spectral_mean' => 'required|numeric',
+            'spectral_std' => 'required|numeric',
+            'pla_difference' => 'required|numeric',
+            'temp_rh_index' => 'required|numeric',
+            'temp_range' => 'required|numeric',
+            'rh_range' => 'required|numeric',
         ]);
-
-        $sensorData = SensorData::find($validated['sensor_data_id']);
 
         // 2. Pemanggilan API Python (ML Service)
         try {
-            $response = Http::post('http://127.0.0.1:8001/predict', [
-                'temp_mean'      => (float) $sensorData->temp_mean,
-                'rh_mean'        => (float) $sensorData->rh_mean,
-                'pd1_mean'       => (float) $sensorData->pd1_mean,
-                'spectral_mean'  => (float) $sensorData->spectral_mean,
-                'spectral_std'   => (float) $sensorData->spectral_std,
-                'pla_difference' => (float) $sensorData->pla_difference,
-                'rh_range'       => (float) $sensorData->rh_range,
-            ]);
+            $response = Http::post('http://127.0.0.1:8001/predict', $validated);
 
             if (!$response->successful()) {
                 throw new \Exception("ML Service mengembalikan error: " . $response->body());
@@ -38,26 +37,49 @@ class PredictionController extends Controller
 
             $mlResult = $response->json()['data']; // Mengambil bagian 'data' dari response FastAPI
             
-            // 3. Simpan hasil ke database menggunakan respons dari Python
+            // 3. Buat dummy SensorData untuk foreign key requirement
+            $sensorData = SensorData::create([
+                'timestamp' => now(),
+                'temp_mean' => $validated['temp_mean'],
+                'rh_mean' => $validated['rh_mean'],
+                'pd1_mean' => $validated['pd1_mean'],
+                'pd2_mean' => $validated['pd2_mean'],
+                'spectral_mean' => $validated['spectral_mean'],
+                'spectral_std' => $validated['spectral_std'],
+                'pla_difference' => $validated['pla_difference'],
+                'temp_rh_index' => $validated['temp_rh_index'],
+                'temp_range' => $validated['temp_range'],
+                'rh_range' => $validated['rh_range'],
+                'water_stress' => $mlResult['prediction'],
+            ]);
+
+            // Memetakan label ML ke ID rekomendasi di database
+            $recommendationId = null;
+            $mlPrediction = $mlResult['prediction'];
+            if ($mlPrediction === 'Healthy Environment' || $mlPrediction === 'Optimal Growth') {
+                $recommendationId = 1; // Normal
+            } elseif ($mlPrediction === 'Potential Water Stress') {
+                $recommendationId = 3; // High Stress
+            }
+
+            // 4. Simpan hasil ke prediction_histories
             $prediction = PredictionHistory::create([
                 'user_id' => $request->user()->id,
                 'sensor_data_id' => $sensorData->id,
-                'prediction_result' => $mlResult['prediction'], // 'Normal' atau 'Stress'
-                'confidence' => $mlResult['confidence'],        // Simpan nilai akurasi
-                'notes' => 'Prediksi berhasil diproses via ML Microservice'
+                'prediction' => $mlResult['prediction'], // Kolom aslinya bernama 'prediction' di migration, bukan 'prediction_result'
+                'confidence' => $mlResult['confidence'],
+                'recommendation_id' => $recommendationId,
             ]);
 
-            // 4. Update data sensor
-            $sensorData->update([
-                'water_stress' => $mlResult['prediction'],
-                // cluster_id tidak diset karena model K-Means tidak digunakan (opsional)
-            ]);
+            // Eager load relasi recommendation agar deskripsi rekomendasi dikirim ke frontend
+            $prediction->load('recommendation');
 
             return response()->json([
                 'message' => 'Prediksi berhasil diproses',
                 'data' => [
                     'prediction_history' => $prediction,
-                    'sensor_data' => $sensorData
+                    'sensor_data' => $sensorData,
+                    'factors' => $mlResult['factors'] ?? []
                 ]
             ], 201);
 

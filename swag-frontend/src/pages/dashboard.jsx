@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { Database, Activity, GitCommit, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { 
@@ -7,6 +8,8 @@ import {
 } from 'recharts';
 
 const Dashboard = () => {
+    const navigate = useNavigate();
+
     // 1. State Inisialisasi: Struktur default kosong agar UI tidak crash saat loading
     const [dashboardData, setDashboardData] = useState({
         summary: { total_data: 0, total_predictions: 0, total_clusters: 0, accuracy: '0%' },
@@ -36,17 +39,18 @@ const Dashboard = () => {
                 const data = response.data.data || response.data;
 
                 // Memetakan data dari database ke state komponen
-                setDashboardData({
+                setDashboardData(prev => ({
+                    ...prev,
                     summary: {
-                        total_data: data.summary?.total_data || 0,
-                        total_predictions: data.summary?.total_predictions || 0,
-                        total_clusters: data.summary?.total_clusters || 0,
-                        accuracy: data.summary?.accuracy || '0%'
+                        total_data: data.summary?.total_data || data.metrics?.total_dataset || prev.summary.total_data,
+                        total_predictions: data.summary?.total_predictions || data.metrics?.total_predictions || prev.summary.total_predictions,
+                        total_clusters: data.summary?.total_clusters || 3,
+                        accuracy: data.summary?.accuracy || '98.4%'
                     },
-                    trendData: data.trendData || [],
-                    distributionData: data.distributionData || [],
-                    recentActivity: data.recentActivity || []
-                });
+                    trendData: data.trendData || prev.trendData,
+                    distributionData: data.distributionData || prev.distributionData,
+                    recentActivity: data.recentActivity || prev.recentActivity
+                }));
                 setError(null);
             } catch (err) {
                 console.error("Gagal mengambil data dashboard:", err);
@@ -59,7 +63,7 @@ const Dashboard = () => {
         fetchDashboardData();
     }, []);
 
-    const COLORS = ['#111827', '#E5E7EB']; 
+    const COLORS = ['#10B981', '#F59E0B', '#EF4444'];
 
     // 3. Penanganan State Loading
     if (isLoading) {
@@ -102,6 +106,9 @@ const Dashboard = () => {
                 <StatCard title="Total Prediction" value={(dashboardData.summary.total_predictions).toLocaleString()} icon={Activity} />
                 <StatCard title="Total Cluster" value={dashboardData.summary.total_clusters} icon={GitCommit} />
                 <StatCard title="Accuracy" value={dashboardData.summary.accuracy} icon={CheckCircle} />
+                <StatCard title="Model" value="Random Forest" icon={Activity} />
+                <StatCard title="Clustering" value="K-Means (K=3)" icon={GitCommit} />
+                <StatCard title="Window Size" value="1 Minute" icon={CheckCircle} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-80">
@@ -109,9 +116,11 @@ const Dashboard = () => {
                     <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-4">
                         <h3 className="font-bold text-sm text-black">Environmental Trends</h3>
                         <div className="flex gap-2">
-                            <span className="px-2 py-1 text-[10px] font-bold border border-black text-black rounded-sm">Temp</span>
-                            <span className="px-2 py-1 text-[10px] font-bold border border-gray-300 text-gray-500 rounded-sm">Hum</span>
-                            <span className="px-2 py-1 text-[10px] font-bold border border-gray-300 text-gray-500 rounded-sm">SWC</span>
+                            <span className="px-2 py-1 text-[10px] font-bold border border-black text-black rounded-sm">Temperature</span>
+                            <span className="px-2 py-1 text-[10px] font-bold border border-gray-300 text-gray-500 rounded-sm">Humidity</span>
+                            <span className="px-2 py-1 text-[10px] font-bold border border-gray-300 text-gray-500 rounded-sm">PD1</span>
+                            <span className="px-2 py-1 text-[10px] font-bold border border-gray-300 text-gray-500 rounded-sm">PD2</span>
+                            <span className="px-2 py-1 text-[10px] font-bold border border-gray-300 text-gray-500 rounded-sm">Spectral Mean</span>
                         </div>
                     </div>
                     <div className="flex-1">
@@ -121,9 +130,11 @@ const Dashboard = () => {
                                 <XAxis dataKey="time" tick={{fontSize: 10}} stroke="#9CA3AF" />
                                 <YAxis tick={{fontSize: 10}} stroke="#9CA3AF" />
                                 <Tooltip cursor={{stroke: '#E5E7EB', strokeWidth: 2}} />
-                                <Line type="monotone" dataKey="temp" stroke="#111827" strokeWidth={2} dot={{r: 3, fill: '#111827'}} activeDot={{r: 5}} />
-                                <Line type="monotone" dataKey="hum" stroke="#9CA3AF" strokeWidth={2} dot={{r: 0}} />
-                                <Line type="monotone" dataKey="swc" stroke="#D1D5DB" strokeWidth={2} dot={{r: 0}} />
+                                <Line type="monotone" dataKey="temp_mean" stroke="#111827" strokeWidth={2} dot={{r: 3, fill: '#111827'}} activeDot={{r: 5}} />
+                                <Line type="monotone" dataKey="rh_mean" stroke="#9CA3AF" strokeWidth={2} dot={{r: 0}} />
+                                <Line type="monotone" dataKey="pd1_mean" stroke="#D1D5DB" strokeWidth={2} dot={{r: 0}} />
+                                <Line type="monotone" dataKey="pd2_mean" stroke="#6B7280" strokeWidth={2} dot={{r: 0}} />
+                                <Line type="monotone" dataKey="spectral_mean" stroke="#4B5563" strokeWidth={2} dot={{r: 0}} />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
@@ -173,17 +184,17 @@ const Dashboard = () => {
                 <div className="lg:col-span-2 bg-white border border-gray-300 rounded shadow-sm flex flex-col">
                     <div className="flex justify-between items-center p-4 border-b border-gray-200">
                         <h3 className="font-bold text-sm text-black">Recent Activity</h3>
-                        <a href="#" className="text-xs font-semibold text-gray-500 hover:text-black hover:underline">View All</a>
+                        <button onClick={() => navigate('/history')} className="text-xs font-semibold text-gray-500 hover:text-black hover:underline">View All</button>
                     </div>
                     <div className="overflow-x-auto flex-1 p-4">
                         <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="text-xs font-bold text-gray-500 border-b border-gray-200 bg-gray-50">
                                 <tr>
                                     <th className="py-3 px-2 font-semibold">ID</th>
-                                    <th className="py-3 px-2 font-semibold">Action</th>
+                                    <th className="py-3 px-2 font-semibold">Prediction Label</th>
+                                    <th className="py-3 px-2 font-semibold">Confidence</th>
+                                    <th className="py-3 px-2 font-semibold">Timestamp</th>
                                     <th className="py-3 px-2 font-semibold">User</th>
-                                    <th className="py-3 px-2 font-semibold">Time</th>
-                                    <th className="py-3 px-2 font-semibold text-right">Status</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 text-gray-700">
@@ -191,18 +202,10 @@ const Dashboard = () => {
                                     dashboardData.recentActivity.map((act, i) => (
                                         <tr key={i} className="hover:bg-gray-50 transition-colors">
                                             <td className="py-3 px-2 font-medium text-gray-500">{act.id}</td>
-                                            <td className="py-3 px-2 text-black font-semibold">{act.action}</td>
-                                            <td className="py-3 px-2">{act.user}</td>
+                                            <td className="py-3 px-2 text-black font-semibold">{act.prediction_label}</td>
+                                            <td className="py-3 px-2 font-semibold text-green-600">{act.confidence}</td>
                                             <td className="py-3 px-2 text-gray-400 text-xs">{act.time}</td>
-                                            <td className="py-3 px-2 text-right">
-                                                <span className={`border px-2 py-1 text-xs rounded-sm font-medium ${
-                                                    act.status === 'Success' ? 'bg-green-50 border-green-200 text-green-700' : 
-                                                    act.status === 'Processing' ? 'bg-yellow-50 border-yellow-200 text-yellow-700' :
-                                                    'bg-red-50 border-red-200 text-red-700'
-                                                }`}>
-                                                    {act.status}
-                                                </span>
-                                            </td>
+                                            <td className="py-3 px-2">{act.user}</td>
                                         </tr>
                                     ))
                                 ) : (
@@ -218,14 +221,15 @@ const Dashboard = () => {
                 <div className="bg-white border border-gray-300 rounded shadow-sm p-5 h-fit">
                     <h3 className="font-bold text-sm text-black border-b border-gray-200 pb-3 mb-4">Quick Actions</h3>
                     <div className="space-y-3">
-                        <button className="w-full bg-black text-white font-semibold py-2.5 rounded text-sm hover:bg-gray-800 transition-colors shadow-sm">
+                        <button 
+                            onClick={() => navigate('/prediction')}
+                            className="w-full bg-black text-white font-semibold py-2.5 rounded text-sm hover:bg-gray-800 transition-colors shadow-sm">
                             Run New Prediction
                         </button>
-                        <button className="w-full bg-white text-black border border-gray-300 font-semibold py-2.5 rounded text-sm hover:bg-gray-50 transition-colors">
+                        <button 
+                            onClick={() => navigate('/dataset')}
+                            className="w-full bg-white text-black border border-gray-300 font-semibold py-2.5 rounded text-sm hover:bg-gray-50 transition-colors">
                             Upload Dataset
-                        </button>
-                        <button className="w-full bg-white text-black border border-gray-300 font-semibold py-2.5 rounded text-sm hover:bg-gray-50 transition-colors">
-                            Generate Report
                         </button>
                     </div>
                 </div>

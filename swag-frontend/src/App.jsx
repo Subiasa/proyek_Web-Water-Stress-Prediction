@@ -8,7 +8,7 @@ import Dashboard from './pages/dashboard';
 import Dataset from './pages/dataset';
 import Prediction from './pages/prediction';
 import History from './pages/history';
-import Analytics from './pages/analytics';
+
 import Profile from './pages/profile';
 
 
@@ -25,7 +25,6 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dataset" element={<Dataset />} />
             <Route path="/prediction" element={<Prediction />} />
-            <Route path="/analytics" element={<Analytics />} />
             <Route path="/history" element={<History />} />
             <Route path="/profile" element={<Profile />} />
           </Route>

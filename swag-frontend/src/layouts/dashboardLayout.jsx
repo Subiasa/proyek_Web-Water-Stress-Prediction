@@ -11,7 +11,6 @@ const DashboardLayout = () => {
         { path: '/dashboard', name: 'Dashboard', icon: LayoutDashboard },
         { path: '/dataset', name: 'Dataset', icon: Database },
         { path: '/prediction', name: 'Prediction', icon: Activity },
-        { path: '/analytics', name: 'Analytics', icon: BarChart2 },
         { path: '/history', name: 'History', icon: History },
         { path: '/profile', name: 'Profile', icon: User },
     ];

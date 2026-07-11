@@ -9,12 +9,16 @@ class SensorData extends Model
     // Menentukan kolom yang aman dan boleh diisi melalui API
     protected $fillable = [
         'timestamp',
-        'temperature',
-        'humidity',
-        'soil_water_content',
-        'par',
-        'leaf_thickness',
-        'leaf_length',
+        'temp_mean',
+        'rh_mean',
+        'pd1_mean',
+        'pd2_mean',
+        'spectral_mean',
+        'spectral_std',
+        'pla_difference',
+        'temp_rh_index',
+        'temp_range',
+        'rh_range',
         'cluster_id',
         'water_stress'
     ];
@@ -24,12 +28,16 @@ class SensorData extends Model
     {
         return [
             'timestamp' => 'datetime',
-            'temperature' => 'float',
-            'humidity' => 'float',
-            'soil_water_content' => 'float',
-            'par' => 'float',
-            'leaf_thickness' => 'float',
-            'leaf_length' => 'float',
+            'temp_mean' => 'float',
+            'rh_mean' => 'float',
+            'pd1_mean' => 'float',
+            'pd2_mean' => 'float',
+            'spectral_mean' => 'float',
+            'spectral_std' => 'float',
+            'pla_difference' => 'float',
+            'temp_rh_index' => 'float',
+            'temp_range' => 'float',
+            'rh_range' => 'float',
         ];
     }
 

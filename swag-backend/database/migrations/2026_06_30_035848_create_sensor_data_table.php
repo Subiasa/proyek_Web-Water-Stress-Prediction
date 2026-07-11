@@ -14,12 +14,16 @@ return new class extends Migration
         Schema::create('sensor_data', function (Blueprint $table) {
             $table->id();
             $table->dateTime('timestamp');
-            $table->float('temperature');
-            $table->float('humidity');
-            $table->float('soil_water_content');
-            $table->float('par');
-            $table->float('leaf_thickness');
-            $table->float('leaf_length');
+            $table->float('temp_mean');
+            $table->float('rh_mean');
+            $table->float('pd1_mean');
+            $table->float('pd2_mean');
+            $table->float('spectral_mean');
+            $table->float('spectral_std');
+            $table->float('pla_difference');
+            $table->float('temp_rh_index');
+            $table->float('temp_range');
+            $table->float('rh_range');
             $table->foreignId('cluster_id')->nullable()->constrained('clustering_results')->nullOnDelete();
             $table->string('water_stress')->nullable();
             $table->timestamps();
